@@ -4,9 +4,7 @@
 Adonis shield is middleware to standard HTTP websites to protect themselves from common web attacks like **xss**, **csp** and **csrf**.
 
 [![NPM Version][npm-image]][npm-url]
-[![Build Status][travis-image]][travis-url]
-[![Appveyor][appveyor-image]][appveyor-url]
-[![Coveralls][coveralls-image]][coveralls-url]
+[![Build Status][circleci-image]][circleci-url]
 
 <img src="http://res.cloudinary.com/adonisjs/image/upload/q_100/v1497112678/adonis-purple_pzkmzt.svg" width="200px" align="right" hspace="30px" vspace="100px">
 
@@ -78,16 +76,8 @@ test.failing('2 + 2 is always 4, but add method returns 6', (assert) => {
 
 Now since the `add` method has a bug, it will return `6` instead of `4`. But the build will pass.
 
-[appveyor-image]: https://img.shields.io/appveyor/ci/thetutlage/adonis-shield/master.svg?style=flat-square
-
-[appveyor-url]: https://ci.appveyor.com/project/thetutlage/adonis-shield
-
-[npm-image]: https://img.shields.io/npm/v/@adonisjs/shield.svg?style=flat-square
+[npm-image]: https://img.shields.io/npm/v/@adonisjs/shield/legacy.svg?style=for-the-badge
 [npm-url]: https://npmjs.org/package/@adonisjs/shield
 
-[travis-image]: https://img.shields.io/travis/adonisjs/adonis-shield/master.svg?style=flat-square
-[travis-url]: https://travis-ci.org/adonisjs/adonis-shield
-
-[coveralls-image]: https://img.shields.io/coveralls/adonisjs/adonis-shield/master.svg?style=flat-square
-
-[coveralls-url]: https://coveralls.io/github/adonisjs/adonis-shield
+[circleci-image]: https://img.shields.io/circleci/project/github/adonisjs/shield/legacy.svg?style=for-the-badge&logo=circleci
+[circleci-url]: https://circleci.com/gh/adonisjs/shield "circleci"
