@@ -199,9 +199,9 @@ test.group('Shield', () => {
     const req = getReq()
     const res = getRes()
     assert.deepEqual(shield.buildCsp(req, res), {
-      'Content-Security-Policy': `script-src 'self'; `,
-      'X-Content-Security-Policy': `script-src 'self'; `,
-      'X-WebKit-CSP': `script-src 'self'; `
+      'Content-Security-Policy': 'script-src \'self\'; ',
+      'X-Content-Security-Policy': 'script-src \'self\'; ',
+      'X-WebKit-CSP': 'script-src \'self\'; '
     })
   })
 
