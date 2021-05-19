@@ -1,4 +1,4 @@
-'use strict'
+"use strict";
 
 /*
  * adonis-shield
@@ -7,20 +7,21 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
-*/
+ */
 
-const guard = require('node-guard')
-const csp = require('node-csp')
-const uuid = require('uuid')
-const csrf = new (require('csrf'))()
-const GE = require('@adonisjs/generic-exceptions')
-const nodeCookie = require('node-cookie')
+const guard = require("node-guard");
+const csp = require("node-csp");
+const uuid = require("uuid");
+const csrf = new (require("csrf"))();
+const GE = require("@adonisjs/generic-exceptions");
+const nodeCookie = require("node-cookie");
 
 class Shield {
-  constructor (Config) {
-    this.config = Config.merge('shield', require('../../example/config.js'))
-    this.cspNonce = uuid.v4()
-    this.appSecret = Config.get('app.appKey')
+  constructor(Config) {
+    this.config = Config.get("shield");
+    this.sessionsEnabled = Config.get("sessions") ? true : false; // Determines if the sessions provider is added
+    this.cspNonce = uuid.v4();
+    this.appSecret = Config.get("app.appKey");
   }
 
   /**
@@ -31,8 +32,8 @@ class Shield {
    *
    * @return {String}
    */
-  get sessionKey () {
-    return 'csrf-secret'
+  get sessionKey() {
+    return "csrf-secret";
   }
 
   /**
@@ -47,20 +48,20 @@ class Shield {
    *
    * @private
    */
-  _getHeaderKeys (headers) {
+  _getHeaderKeys(headers) {
     if (this.config.csp.setAllHeaders) {
-      return Object.keys(headers)
+      return Object.keys(headers);
     }
 
-    if (headers['Content-Security-Policy-Report-Only']) {
-      return ['Content-Security-Policy-Report-Only']
+    if (headers["Content-Security-Policy-Report-Only"]) {
+      return ["Content-Security-Policy-Report-Only"];
     }
 
-    if (headers['Content-Security-Policy']) {
-      return ['Content-Security-Policy']
+    if (headers["Content-Security-Policy"]) {
+      return ["Content-Security-Policy"];
     }
 
-    return []
+    return [];
   }
 
   /**
@@ -73,8 +74,8 @@ class Shield {
    *
    * @private
    */
-  _isCsrfEnabled () {
-    return this.config.csrf.enable
+  _isCsrfEnabled() {
+    return this.config.csrf.enable;
   }
 
   /**
@@ -89,11 +90,11 @@ class Shield {
    *
    * @private
    */
-  _fallsUnderValidationMethod (method) {
-    method = method.toLowerCase()
+  _fallsUnderValidationMethod(method) {
+    method = method.toLowerCase();
     return !!this.config.csrf.methods.find((definedMethod) => {
-      return definedMethod.toLowerCase() === method
-    })
+      return definedMethod.toLowerCase() === method;
+    });
   }
 
   /**
@@ -109,12 +110,12 @@ class Shield {
    *
    * @private
    */
-  _fallsUnderValidationUri (request) {
-    const { filterUris } = this.config.csrf
+  _fallsUnderValidationUri(request) {
+    const { filterUris } = this.config.csrf;
     if (filterUris && filterUris.length) {
-      return !request.match(filterUris)
+      return !request.match(filterUris);
     }
-    return true
+    return true;
   }
 
   /**
@@ -134,11 +135,11 @@ class Shield {
    *
    * @return {void}
    */
-  setGuardHeaders (req, res) {
-    guard.addFrameOptions(res, this.config.xframe)
-    guard.addXssFilter(req, res, this.config.xss)
-    guard.addNoSniff(res, this.config.nosniff)
-    guard.addNoOpen(res, this.config.noopen)
+  setGuardHeaders(req, res) {
+    guard.addFrameOptions(res, this.config.xframe);
+    guard.addXssFilter(req, res, this.config.xss);
+    guard.addNoSniff(res, this.config.nosniff);
+    guard.addNoOpen(res, this.config.noopen);
   }
 
   /**
@@ -155,10 +156,10 @@ class Shield {
    *
    * @return {Object}
    */
-  buildCsp (req, res) {
-    const config = Object.assign({}, this.config.csp)
-    config.nonce = this.cspNonce
-    return csp.build(req, config)
+  buildCsp(req, res) {
+    const config = Object.assign({}, this.config.csp);
+    config.nonce = this.cspNonce;
+    return csp.build(req, config);
   }
 
   /**
@@ -171,8 +172,10 @@ class Shield {
    *
    * @return {void}
    */
-  setCspHeaders (headers, response) {
-    this._getHeaderKeys(headers).forEach((key) => (response.header(key, headers[key])))
+  setCspHeaders(headers, response) {
+    this._getHeaderKeys(headers).forEach((key) =>
+      response.header(key, headers[key])
+    );
   }
 
   /**
@@ -185,16 +188,16 @@ class Shield {
    *
    * @return {void}
    */
-  shareCspViewLocals (headers, view) {
+  shareCspViewLocals(headers, view) {
     const metaTags = this._getHeaderKeys(headers).map((key) => {
-      return `<meta http-equiv="${key}" content="${headers[key]}">`
-    })
+      return `<meta http-equiv="${key}" content="${headers[key]}">`;
+    });
     view.share({
       cspMeta: function () {
-        return this.safe(metaTags.join('\n'))
+        return this.safe(metaTags.join("\n"));
       },
-      cspNonce: this.cspNonce
-    })
+      cspNonce: this.cspNonce,
+    });
   }
 
   /**
@@ -204,8 +207,8 @@ class Shield {
    *
    * @param  {Object}              request
    */
-  setRequestNonce (request) {
-    request.nonce = this.cspNonce
+  setRequestNonce(request) {
+    request.nonce = this.cspNonce;
   }
 
   /**
@@ -223,15 +226,15 @@ class Shield {
    *
    * @return {String}
    */
-  async getCsrfSecret (session) {
-    const secret = session.get(this.sessionKey)
+  async getCsrfSecret(session) {
+    const secret = session.get(this.sessionKey);
     if (secret) {
-      return secret
+      return secret;
     }
 
-    const newSecret = await csrf.secret()
-    session.put(this.sessionKey, newSecret)
-    return newSecret
+    const newSecret = await csrf.secret();
+    session.put(this.sessionKey, newSecret);
+    return newSecret;
   }
 
   /**
@@ -244,8 +247,8 @@ class Shield {
    *
    * @return {String}
    */
-  generateCsrfToken (secret) {
-    return csrf.create(secret)
+  generateCsrfToken(secret) {
+    return csrf.create(secret);
   }
 
   /**
@@ -263,9 +266,9 @@ class Shield {
    *
    * @throws {HttpException} If unable to verify secret
    */
-  verifyToken (secret, token) {
+  verifyToken(secret, token) {
     if (!csrf.verify(secret, token)) {
-      throw new GE.HttpException('Invalid CSRF token', 403, 'EBADCSRFTOKEN')
+      throw new GE.HttpException("Invalid CSRF token", 403, "EBADCSRFTOKEN");
     }
   }
 
@@ -279,14 +282,16 @@ class Shield {
    *
    * @return {String|Null}
    */
-  getCsrfToken (request) {
-    const token = request.input('_csrf') || request.header('x-csrf-token')
+  getCsrfToken(request) {
+    const token = request.input("_csrf") || request.header("x-csrf-token");
     if (token) {
-      return token
+      return token;
     }
 
-    const encryptedToken = request.header('x-xsrf-token')
-    return encryptedToken ? nodeCookie.unPackValue(encryptedToken, this.appSecret, !!this.appSecret) : null
+    const encryptedToken = request.header("x-xsrf-token");
+    return encryptedToken
+      ? nodeCookie.unPackValue(encryptedToken, this.appSecret, !!this.appSecret)
+      : null;
   }
 
   /**
@@ -300,13 +305,15 @@ class Shield {
    *
    * @return {void}
    */
-  shareCsrfViewLocals (csrfToken, view) {
+  shareCsrfViewLocals(csrfToken, view) {
     view.share({
       csrfToken,
       csrfField: function () {
-        return this.safe(`<input type="hidden" name="_csrf" value="${csrfToken}">`)
-      }
-    })
+        return this.safe(
+          `<input type="hidden" name="_csrf" value="${csrfToken}">`
+        );
+      },
+    });
   }
 
   /**
@@ -324,8 +331,8 @@ class Shield {
    * @param  {String}       csrfToken
    * @param  {Object}       response
    */
-  setCsrfCookie (csrfToken, response) {
-    response.cookie('XSRF-TOKEN', csrfToken, this.config.csrf.cookieOptions)
+  setCsrfCookie(csrfToken, response) {
+    response.cookie("XSRF-TOKEN", csrfToken, this.config.csrf.cookieOptions);
   }
 
   /**
@@ -338,84 +345,91 @@ class Shield {
    *
    * @return {void}
    */
-  setRequestCsrfToken (csrfToken, request) {
-    request.csrfToken = csrfToken
+  setRequestCsrfToken(csrfToken, request) {
+    request.csrfToken = csrfToken;
   }
 
-  async handle ({ request, response, session, view }, next) {
-    if (!session) {
-      throw GE
-        .RuntimeException
-        .invoke('Make sure to install/setup session provider to use shield middleware')
+  async handle({ request, response, session, view }, next) {
+    if (this.sessionsEnabled && !session) {
+      throw GE.RuntimeException.invoke(
+        "Make sure to install/setup session provider to use shield middleware"
+      );
     }
 
-    const { request: req, response: res } = response
+    const { request: req, response: res } = response;
 
     /**
      * Setting guard headers
      */
-    this.setGuardHeaders(req, res)
+    this.setGuardHeaders(req, res);
 
     /**
      * Building csp string with required header and
      * meta keys
      */
-    const headers = this.buildCsp(req, res)
+    const headers = this.buildCsp(req, res);
 
     /**
      * Setting csp as HTTP headers
      */
-    this.setCspHeaders(headers, response)
+    this.setCspHeaders(headers, response);
 
     /**
      * Sharing csp nonce and meta tags as view
      * locals
      */
-    this.shareCspViewLocals(headers, view)
+    this.shareCspViewLocals(headers, view);
 
     /**
      * Sharing csp nonce with request property
      */
-    this.setRequestNonce(request)
+    this.setRequestNonce(request);
 
-    /**
-     * Getting the csrf secret and setting
-     * as the session value too.
-     */
-    const csrfSecret = await this.getCsrfSecret(session)
+    if (this.sessionsEnabled) {
+      /**
+       * Getting the csrf secret and setting
+       * as the session value too.
+       */
+      const csrfSecret = await this.getCsrfSecret(session);
 
-    /**
-     * If the request url and method is supposed to be checked
-     * against csrf attack, then verify the token.
-     */
-    if (this._isCsrfEnabled() && this._fallsUnderValidationUri(request) && this._fallsUnderValidationMethod(request.method())) {
-      const csrfToken = this.getCsrfToken(request)
-      this.verifyToken(csrfSecret, csrfToken)
+      /**
+       * If the request url and method is supposed to be checked
+       * against csrf attack, then verify the token.
+       */
+      if (
+        this._isCsrfEnabled() &&
+        this._fallsUnderValidationUri(request) &&
+        this._fallsUnderValidationMethod(request.method())
+      ) {
+        const csrfToken = this.getCsrfToken(request);
+        this.verifyToken(csrfSecret, csrfToken);
+      }
+
+      /**
+       * Generate a new token for each request, if verification
+       * was skipped or passed.
+       */
+
+      const newCsrfToken = this.generateCsrfToken(csrfSecret);
+
+      /**
+       * Share the csrf token, csrf field as view locals
+       */
+      this.shareCsrfViewLocals(newCsrfToken, view);
+
+      /**
+       * Set the response cookie for csrf token. This is required by Javascript
+       * frameworks like angular, and don't worry cookie is signed and encrypted.
+       */
+      this.setCsrfCookie(newCsrfToken, response);
+
+      /**
+       * Set token on the request object
+       */
+      this.setRequestCsrfToken(newCsrfToken, request);
     }
-
-    /**
-     * Generate a new token for each request, if verification
-     * was skipped or passed.
-     */
-    const newCsrfToken = this.generateCsrfToken(csrfSecret)
-
-    /**
-     * Share the csrf token, csrf field as view locals
-     */
-    this.shareCsrfViewLocals(newCsrfToken, view)
-
-    /**
-     * Set the response cookie for csrf token. This is required by Javascript
-     * frameworks like angular, and don't worry cookie is signed and encrypted.
-     */
-    this.setCsrfCookie(newCsrfToken, response)
-
-    /**
-     * Set token on the request object
-     */
-    this.setRequestCsrfToken(newCsrfToken, request)
-    await next()
+    await next();
   }
 }
 
-module.exports = Shield
+module.exports = Shield;
