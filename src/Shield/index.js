@@ -428,7 +428,19 @@ class Shield {
        */
       this.setRequestCsrfToken(newCsrfToken, request);
     }
+
+    this.handleHsts(request, response);
+
     await next();
+  }
+
+  handleHsts(request, response) {
+    if (this.config.hsts.enable && request.protocol() === "https") {
+      response.safeHeader(
+        "Strict-Transport-Security",
+        `max-age=${this.config.hsts.maxAge}; includeSubDomains`
+      );
+    }
   }
 }
 
