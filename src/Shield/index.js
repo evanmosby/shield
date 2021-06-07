@@ -349,6 +349,15 @@ class Shield {
     request.csrfToken = csrfToken;
   }
 
+  handleHsts(request, response) {
+    if (this.config.hsts.enabled && request.protocol() === "https") {
+      response.safeHeader(
+        "Strict-Transport-Security",
+        `max-age=${this.config.hsts.maxAge}; includeSubDomains`
+      );
+    }
+  }
+
   async handle({ request, response, session, view }, next) {
     if (this.sessionsEnabled && !session) {
       throw GE.RuntimeException.invoke(
@@ -432,15 +441,6 @@ class Shield {
     this.handleHsts(request, response);
 
     await next();
-  }
-
-  handleHsts(request, response) {
-    if (this.config.hsts.enable && request.protocol() === "https") {
-      response.safeHeader(
-        "Strict-Transport-Security",
-        `max-age=${this.config.hsts.maxAge}; includeSubDomains`
-      );
-    }
   }
 }
 
